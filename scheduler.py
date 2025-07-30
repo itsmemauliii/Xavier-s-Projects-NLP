@@ -1,32 +1,21 @@
-import threading
-import time
-from datetime import datetime
-from db import get_due_reminders
+# scheduler.py
+import os
+from dotenv import load_dotenv
 from twilio.rest import Client
 
-# Set these with your Twilio credentials
-TWILIO_SID = "YOUR_SID"
-TWILIO_AUTH = "YOUR_AUTH"
-FROM_NUMBER = "whatsapp:+14155238886"
+load_dotenv()
+
+TWILIO_SID = os.getenv("TWILIO_SID")
+TWILIO_AUTH = os.getenv("TWILIO_AUTH")
+FROM_NUMBER = os.getenv("FROM_NUMBER")
+TO_NUMBER = os.getenv("TO_NUMBER")
 
 client = Client(TWILIO_SID, TWILIO_AUTH)
 
-def send_reminder(number, text):
-    client.messages.create(
-        body=f"⏰ Reminder: {text}",
+def send_reminder(msg):
+    message = client.messages.create(
         from_=FROM_NUMBER,
-        to=f"whatsapp:{number}"
+        body=msg,
+        to=TO_NUMBER
     )
-
-def background_task():
-    while True:
-        now = datetime.now().strftime('%H:%M')
-        reminders = get_due_reminders(now)
-        for r in reminders:
-            send_reminder(r[1], r[2])
-        time.sleep(60)
-
-def start_scheduler():
-    thread = threading.Thread(target=background_task)
-    thread.daemon = True
-    thread.start()
+    print("Sent:", message.sid)
